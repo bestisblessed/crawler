@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from bs4 import BeautifulSoup
 import re
+os.makedirs('data/tapology-fighters-ufc/', exist_ok=True)
 def extract_fighter_details_updated(soup):
     fighter_details = {
         "Given Name": None,
@@ -58,14 +59,25 @@ def extract_fighter_details_updated(soup):
     # return fighter_details
 directory_path = 'data/tapology-fighters-ufc/'  
 all_fighter_details = []
+
+# Get total number of files to process
+total_files = len([f for f in os.listdir(directory_path) if f.startswith('cleaned_') and f.endswith('.html')])
+processed_files = 0
+
 for filename in os.listdir(directory_path):
-    if filename.endswith('.html'):
+    if filename.startswith('cleaned_') and filename.endswith('.html'):
         file_path = os.path.join(directory_path, filename)
         with open(file_path, 'r', encoding='utf-8') as file:
             soup = BeautifulSoup(file.read(), 'html.parser')
         fighter_details = extract_fighter_details_updated(soup)
         fighter_details["Fighter Name"] = filename.replace('.html', '')  
         all_fighter_details.append(fighter_details)
+        
+        # Update and display progress
+        processed_files += 1
+        print(f"Processing files: {processed_files}/{total_files} ({(processed_files/total_files*100):.1f}%)", end='\r')
+
+print("\nCreating DataFrame and saving to CSV...")
 fighters_df = pd.DataFrame(all_fighter_details)
-fighters_df.to_csv('data/master_fighters_ufc.csv', index=False)
-print("Fighter details saved to 'master_fighters_ufc.csv'")
+fighters_df.to_csv('data/master_fighters_general_ufc.csv', index=False)
+print("Fighter details saved to 'master_fighters_general_ufc.csv'")
