@@ -14,10 +14,12 @@ async def process_url(crawler, run_config, url):
         config=run_config
     )
 
-    # Save markdown content
+    # Save markdown and HTML content
     print(f"Processing: {url}")
-    with open(f"data/tapology/{sanitized_path}.md", "w", encoding="utf-8") as f:
+    with open(f"data/tapology-events/{sanitized_path}.md", "w", encoding="utf-8") as f:
         f.write(result.markdown)
+    with open(f"data/tapology-events/cleaned_{sanitized_path}.html", "w", encoding="utf-8") as f:
+        f.write(result.cleaned_html)
 
 async def main():
     # Initialize crawler configuration
@@ -32,14 +34,15 @@ async def main():
     await crawler.__aenter__()
     
     # Read and process URLs from CSV
-    with open('data/fighter_info_with_urls.csv', 'r') as csvfile:
+    # with open('data/fighter_info_with_urls.csv', 'r') as csvfile:
+    with open('data/event_urls_tapology_ufc.csv', 'r') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             url = row['URL'].strip()
             if url.startswith('http'):  # Verify it's a valid URL
                 try:
                     await process_url(crawler, run_config, url)
-                    await asyncio.sleep(1)  # Sleep for 1 second after each URL
+                    await asyncio.sleep(2)  # Sleep for 1 second after each URL
                 except Exception as e:
                     print(f"Error processing {url}: {str(e)}")
     
@@ -47,6 +50,8 @@ async def main():
     await crawler.__aexit__(None, None, None)
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-    loop.close()
+    # Updated event loop handling to avoid deprecation warning
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Process interrupted by user")
